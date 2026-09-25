@@ -218,6 +218,13 @@ async def test_golden_fact_candidates_keep_conflicting_values_separate(
     assert idempotent.json()["candidates_created"] == 0
     assert idempotent.json()["candidates_existing"] > 0
 
+    locked_reparse = await client.post(
+        f"/api/v1/documents/{uploaded['02_motor_replacement_2021.pdf']['id']}/parse",
+        headers={"X-Organization-Id": organization_id},
+    )
+    assert locked_reparse.status_code == 409
+    assert "provenance is locked" in locked_reparse.json()["detail"]
+
 
 async def test_fact_candidate_tenant_boundary_and_review_validation(
     client: AsyncClient,
