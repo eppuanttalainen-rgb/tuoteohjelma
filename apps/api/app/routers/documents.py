@@ -121,6 +121,10 @@ async def upload_document(
             status_code=status.HTTP_409_CONFLICT,
             detail="Duplicate evidence file",
         ) from exc
+    except Exception:
+        await db.rollback()
+        storage.delete(stored.key)
+        raise
 
     await db.refresh(document)
     return document
