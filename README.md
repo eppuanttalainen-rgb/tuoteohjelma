@@ -22,6 +22,7 @@ It intentionally does **not** attempt to certify machinery, replace a qualified 
 - API: FastAPI + Python
 - Database: PostgreSQL 18
 - Local orchestration: Docker Compose
+- PDF parser: pypdf 6.19.0
 - AI: provider adapter boundary (implemented later)
 - Evidence storage: local object-storage adapter for development; S3-compatible production adapter planned behind the same boundary
 
@@ -29,11 +30,13 @@ It intentionally does **not** attempt to certify machinery, replace a qualified 
 
 ```text
 apps/
-  api/        FastAPI service
+  api/
+    app/      FastAPI application
+    scripts/  deterministic synthetic test-data tooling
+    tests/
   web/        Next.js application
 docs/
   architecture/
-infra/
 docker-compose.yml
 ```
 
@@ -81,7 +84,7 @@ The API container automatically runs `alembic upgrade head` before starting.
 - tenant-isolation tests
 - Projects UI
 
-### Slice 2 — evidence ingestion (current)
+### Slice 2 — evidence ingestion
 
 - tenant-aware Document model
 - PDF upload endpoint
@@ -93,7 +96,45 @@ The API container automatically runs `alembic upgrade head` before starting.
 - project evidence inventory
 - project evidence workspace UI
 
-Automated extraction, OCR, reconciliation, and compliance interpretation are intentionally **not active yet**.
+### Slice 3 — parsing and provenance (current)
+
+- pypdf 6.19.0 pinned as the deterministic parser version
+- tenant-aware DocumentPage model
+- page number + extracted text
+- page-level SHA-256
+- parser name/version provenance
+- parsing state transitions
+- explicit PARSE_FAILED state
+- reparse replaces prior parsed pages
+- parsed-page read API
+- provenance UI
+- deterministic synthetic PDF test factory
+- CV-204 golden regression pack generator
+
+LLM extraction, OCR, reconciliation, and compliance interpretation are intentionally **not active yet**.
+
+## Golden synthetic pack
+
+Generate the complete CV-204 regression dataset without committing binary evidence to Git:
+
+```bash
+cd apps/api
+python -m scripts.generate_golden_pack --output tmp/golden_cv204
+```
+
+The generated pack contains eight synthetic PDFs plus `manifest.json`, including:
+
+- 2009 original 11 kW motor evidence
+- 2021 15 kW motor replacement
+- ABB ACS580 drive replacement
+- Siemens S7-300 PLC inventory
+- 2022 light-curtain modification
+- a referenced but intentionally missing risk assessment
+- an unrelated 7.5 kW motor datasheet
+- an ambiguous guard-switch field note
+- a byte-for-byte duplicate OEM manual
+
+The pack is generated deterministically and is regression-tested with the same parser used by the application.
 
 ## Evidence storage
 
@@ -102,6 +143,21 @@ Development evidence is stored outside Git under a Docker-managed evidence volum
 Do not commit evidence files to the repository.
 
 The current storage adapter is intentionally replaceable so an encrypted S3-compatible or customer-specific object store can be introduced before production pilots.
+
+## Parser provenance
+
+PDF text is stored page by page. Each parsed page records:
+
+- source document
+- page number
+- normalized extracted text
+- text SHA-256
+- parser name
+- parser version
+
+The parser version is part of provenance because PDF text extraction behavior can change between parser releases.
+
+Image-only pages may produce no text. OCR is deliberately deferred to a later fallback path.
 
 ## Security boundary
 
@@ -130,6 +186,7 @@ Pull requests are validated with:
 - PostgreSQL 18 service startup
 - Alembic migrations
 - API tests
+- parser/golden-pack regression tests
 - tenant-isolation tests
-- Ruff lint
+- Ruff lint for app, tests, migrations and scripts
 - Next.js production build

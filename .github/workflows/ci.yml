@@ -41,7 +41,7 @@ jobs:
       - name: Test
         run: pytest -q
       - name: Lint
-        run: ruff check app tests migrations
+        run: ruff check app tests migrations scripts
 
   web:
     runs-on: ubuntu-latest

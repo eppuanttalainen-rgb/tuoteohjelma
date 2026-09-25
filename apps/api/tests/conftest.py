@@ -7,7 +7,7 @@ from sqlalchemy.pool import StaticPool
 
 from app.db import Base, get_db
 from app.main import app
-from app.models import Document, Machine, Project  # noqa: F401
+from app.models import Document, DocumentPage, Machine, Project  # noqa: F401
 from app.storage import LocalObjectStorage, get_storage
 
 
@@ -29,7 +29,7 @@ async def client(tmp_path: Path) -> AsyncClient:
     app.dependency_overrides[get_db] = override_get_db
     app.dependency_overrides[get_storage] = lambda: LocalObjectStorage(
         root=tmp_path / "evidence",
-        max_upload_bytes=128,
+        max_upload_bytes=4096,
     )
 
     async with AsyncClient(

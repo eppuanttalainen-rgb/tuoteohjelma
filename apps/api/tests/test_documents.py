@@ -119,7 +119,7 @@ async def test_upload_rejects_file_over_configured_limit(client: AsyncClient) ->
     organization_id = str(uuid.uuid4())
     project = await _create_project(client, organization_id)
 
-    oversized_pdf = b"%PDF-" + (b"x" * 200)
+    oversized_pdf = b"%PDF-" + (b"x" * 5000)
     response = await client.post(
         f"/api/v1/projects/{project['id']}/documents",
         headers={"X-Organization-Id": organization_id},
