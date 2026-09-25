@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db import get_db
 from app.dependencies import OrganizationId
-from app.models import Document, DocumentPage, Machine, Project
+from app.models import Document, DocumentPage, FactCandidate, Machine, Project
 from app.parsing import PdfParseError, PypdfParser, get_pdf_parser
 from app.schemas import DocumentPageRead, DocumentParseResult, DocumentRead
 from app.storage import (
@@ -200,6 +200,21 @@ async def parse_document(
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail="Document is already being parsed",
+        )
+
+    existing_candidate = await db.scalar(
+        select(FactCandidate.id).where(
+            FactCandidate.document_id == document.id,
+            FactCandidate.organization_id == organization_id,
+        )
+    )
+    if existing_candidate is not None:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=(
+                "Document provenance is locked after fact extraction; "
+                "reparse requires a versioned source workflow"
+            ),
         )
 
     document.processing_status = "PARSING"
