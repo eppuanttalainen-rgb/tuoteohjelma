@@ -1,7 +1,8 @@
+from pathlib import Path
+
 import argparse
 import hashlib
 import json
-from pathlib import Path
 
 from scripts.synthetic_pdf import make_text_pdf
 
