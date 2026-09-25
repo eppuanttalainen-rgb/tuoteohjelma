@@ -12,6 +12,10 @@ class EvidenceTooLargeError(ValueError):
     pass
 
 
+class InvalidStorageKeyError(ValueError):
+    pass
+
+
 @dataclass(frozen=True)
 class StoredObject:
     key: str
@@ -23,6 +27,13 @@ class LocalObjectStorage:
     def __init__(self, root: Path, max_upload_bytes: int) -> None:
         self.root = root
         self.max_upload_bytes = max_upload_bytes
+
+    def _path_for_key(self, key: str) -> Path:
+        root = self.root.resolve()
+        target = (self.root / key).resolve()
+        if not target.is_relative_to(root):
+            raise InvalidStorageKeyError("Storage key escapes configured root")
+        return target
 
     async def save(
         self,
@@ -61,8 +72,11 @@ class LocalObjectStorage:
             size_bytes=size_bytes,
         )
 
+    def read_bytes(self, key: str) -> bytes:
+        return self._path_for_key(key).read_bytes()
+
     def delete(self, key: str) -> None:
-        (self.root / key).unlink(missing_ok=True)
+        self._path_for_key(key).unlink(missing_ok=True)
 
 
 def get_storage() -> LocalObjectStorage:
