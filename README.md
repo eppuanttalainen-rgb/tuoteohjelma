@@ -96,7 +96,7 @@ The API container automatically runs `alembic upgrade head` before starting.
 - project evidence inventory
 - project evidence workspace UI
 
-### Slice 3 — parsing and provenance (current)
+### Slice 3 — parsing and provenance
 
 - pypdf 6.19.0 pinned as the deterministic parser version
 - tenant-aware DocumentPage model
@@ -111,7 +111,23 @@ The API container automatically runs `alembic upgrade head` before starting.
 - deterministic synthetic PDF test factory
 - CV-204 golden regression pack generator
 
-LLM extraction, OCR, reconciliation, and compliance interpretation are intentionally **not active yet**.
+### Slice 4 — fact candidates and human review (current)
+
+- tenant-aware FactCandidate model
+- append-only FactReview audit records
+- deterministic golden-v1 extraction baseline
+- exact DocumentPage provenance for every candidate
+- raw + normalized values and engineering units
+- extraction confidence and method/version metadata
+- effective date when explicitly available in evidence
+- PROPOSED by default; never auto-confirmed
+- confirm / correct / reject review workflow
+- corrections preserve the original extracted value
+- source documents become provenance-locked after fact extraction
+- fact-review workspace in the web UI
+- CV-204 regression coverage for 11 kW original, 15 kW replacement, unrelated 7.5 kW evidence, and ambiguous guard-switch data
+
+External LLM extraction, OCR, automatic reconciliation/current-state selection, and compliance interpretation are intentionally **not active yet**.
 
 ## Golden synthetic pack
 
@@ -144,7 +160,7 @@ Do not commit evidence files to the repository.
 
 The current storage adapter is intentionally replaceable so an encrypted S3-compatible or customer-specific object store can be introduced before production pilots.
 
-## Parser provenance
+## Parser and fact provenance
 
 PDF text is stored page by page. Each parsed page records:
 
@@ -158,6 +174,10 @@ PDF text is stored page by page. Each parsed page records:
 The parser version is part of provenance because PDF text extraction behavior can change between parser releases.
 
 Image-only pages may produce no text. OCR is deliberately deferred to a later fallback path.
+
+After fact extraction, the source document is locked against in-place reparsing. This prevents reviewed candidates from silently pointing at changed source text. A future parser-upgrade workflow should create a versioned source lineage rather than mutating reviewed provenance.
+
+Every fact candidate stores its source document/page, exact source excerpt, extraction method/version, confidence, normalized value and review state. Human corrections are stored separately from the original extraction, and review actions are audit-recorded with a reviewer reference.
 
 ## Security boundary
 
@@ -187,6 +207,8 @@ Pull requests are validated with:
 - Alembic migrations
 - API tests
 - parser/golden-pack regression tests
+- fact extraction/review regression tests
+- provenance-lock regression tests
 - tenant-isolation tests
 - Ruff lint for app, tests, migrations and scripts
 - Next.js production build
