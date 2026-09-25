@@ -3,19 +3,26 @@ from pathlib import Path
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
-from sqlalchemy import select
+from sqlalchemy import delete, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db import get_db
 from app.dependencies import OrganizationId
-from app.models import Document, Machine, Project
-from app.schemas import DocumentRead
-from app.storage import EvidenceTooLargeError, LocalObjectStorage, get_storage
+from app.models import Document, DocumentPage, Machine, Project
+from app.parsing import PdfParseError, PypdfParser, get_pdf_parser
+from app.schemas import DocumentPageRead, DocumentParseResult, DocumentRead
+from app.storage import (
+    EvidenceTooLargeError,
+    InvalidStorageKeyError,
+    LocalObjectStorage,
+    get_storage,
+)
 
 router = APIRouter(tags=["documents"])
 DbSession = Annotated[AsyncSession, Depends(get_db)]
 Storage = Annotated[LocalObjectStorage, Depends(get_storage)]
+PdfParser = Annotated[PypdfParser, Depends(get_pdf_parser)]
 
 
 async def _get_project(
@@ -32,6 +39,22 @@ async def _get_project(
     if project is None:
         raise HTTPException(status_code=404, detail="Project not found")
     return project
+
+
+async def _get_document_record(
+    document_id: uuid.UUID,
+    organization_id: uuid.UUID,
+    db: AsyncSession,
+) -> Document:
+    document = await db.scalar(
+        select(Document).where(
+            Document.id == document_id,
+            Document.organization_id == organization_id,
+        )
+    )
+    if document is None:
+        raise HTTPException(status_code=404, detail="Document not found")
+    return document
 
 
 @router.post(
@@ -157,12 +180,92 @@ async def get_document(
     organization_id: OrganizationId,
     db: DbSession,
 ) -> Document:
-    document = await db.scalar(
-        select(Document).where(
-            Document.id == document_id,
-            Document.organization_id == organization_id,
+    return await _get_document_record(document_id, organization_id, db)
+
+
+@router.post(
+    "/api/v1/documents/{document_id}/parse",
+    response_model=DocumentParseResult,
+)
+async def parse_document(
+    document_id: uuid.UUID,
+    organization_id: OrganizationId,
+    db: DbSession,
+    storage: Storage,
+    parser: PdfParser,
+) -> DocumentParseResult:
+    document = await _get_document_record(document_id, organization_id, db)
+
+    if document.processing_status == "PARSING":
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Document is already being parsed",
         )
+
+    document.processing_status = "PARSING"
+    await db.commit()
+
+    try:
+        pdf_bytes = storage.read_bytes(document.storage_key)
+        parsed_pages = parser.parse(pdf_bytes)
+    except (FileNotFoundError, InvalidStorageKeyError, PdfParseError) as exc:
+        document.processing_status = "PARSE_FAILED"
+        await db.commit()
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Evidence could not be parsed",
+        ) from exc
+
+    try:
+        await db.execute(
+            delete(DocumentPage).where(DocumentPage.document_id == document.id)
+        )
+        for page in parsed_pages:
+            db.add(
+                DocumentPage(
+                    organization_id=organization_id,
+                    document_id=document.id,
+                    page_number=page.page_number,
+                    text=page.text,
+                    text_sha256=page.text_sha256,
+                    parser_name=parser.name,
+                    parser_version=parser.version,
+                )
+            )
+
+        document.processing_status = "PARSED"
+        await db.commit()
+    except Exception:
+        await db.rollback()
+        document.processing_status = "PARSE_FAILED"
+        await db.commit()
+        raise
+
+    return DocumentParseResult(
+        document_id=document.id,
+        processing_status=document.processing_status,
+        page_count=len(parsed_pages),
+        parser_name=parser.name,
+        parser_version=parser.version,
     )
-    if document is None:
-        raise HTTPException(status_code=404, detail="Document not found")
-    return document
+
+
+@router.get(
+    "/api/v1/documents/{document_id}/pages",
+    response_model=list[DocumentPageRead],
+)
+async def list_document_pages(
+    document_id: uuid.UUID,
+    organization_id: OrganizationId,
+    db: DbSession,
+) -> list[DocumentPage]:
+    await _get_document_record(document_id, organization_id, db)
+    result = await db.scalars(
+        select(DocumentPage)
+        .where(
+            DocumentPage.document_id == document_id,
+            DocumentPage.organization_id == organization_id,
+        )
+        .order_by(DocumentPage.page_number.asc())
+    )
+    return list(result)
