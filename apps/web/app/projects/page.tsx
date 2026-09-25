@@ -144,7 +144,11 @@ export default function ProjectsPage() {
         ) : (
           <div className="project-list">
             {projects.map((project) => (
-              <article className="project-card" key={project.id}>
+              <Link
+                className="project-card project-card-link"
+                href={`/projects/${project.id}`}
+                key={project.id}
+              >
                 <div>
                   <h3>{project.title}</h3>
                   <p>{project.objective || "No objective recorded yet."}</p>
@@ -152,8 +156,9 @@ export default function ProjectsPage() {
                 <div className="project-meta">
                   <span>{project.jurisdiction || "No jurisdiction"}</span>
                   <span>{project.status}</span>
+                  <strong>Open →</strong>
                 </div>
-              </article>
+              </Link>
             ))}
           </div>
         )}
