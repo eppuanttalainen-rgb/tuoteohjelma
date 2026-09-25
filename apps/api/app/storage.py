@@ -1,7 +1,7 @@
 import hashlib
+import uuid
 from dataclasses import dataclass
 from pathlib import Path
-import uuid
 
 from fastapi import UploadFile
 
