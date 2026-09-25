@@ -21,6 +21,8 @@ services:
     environment:
       DATABASE_URL: ${DATABASE_URL:-postgresql+asyncpg://machine_intelligence:machine_intelligence_dev@db:5432/machine_intelligence}
       WEB_ORIGIN: ${WEB_ORIGIN:-http://localhost:3000}
+      STORAGE_ROOT: ${STORAGE_ROOT:-/data/evidence}
+      MAX_UPLOAD_MB: ${MAX_UPLOAD_MB:-50}
     ports:
       - "8000:8000"
     depends_on:
@@ -28,6 +30,7 @@ services:
         condition: service_healthy
     volumes:
       - ./apps/api:/app
+      - evidence_data:/data/evidence
 
   web:
     build:
@@ -45,4 +48,5 @@ services:
 
 volumes:
   postgres_data:
+  evidence_data:
   web_node_modules:

@@ -23,8 +23,9 @@ pnpm-debug.log*
 .DS_Store
 Thumbs.db
 
-# Test and local data
+# Test and local evidence data
 coverage/
 htmlcov/
 tmp/
 uploads/
+data/

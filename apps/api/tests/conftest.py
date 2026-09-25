@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
@@ -5,11 +7,12 @@ from sqlalchemy.pool import StaticPool
 
 from app.db import Base, get_db
 from app.main import app
-from app.models import Machine, Project  # noqa: F401
+from app.models import Document, Machine, Project  # noqa: F401
+from app.storage import LocalObjectStorage, get_storage
 
 
 @pytest_asyncio.fixture
-async def client() -> AsyncClient:
+async def client(tmp_path: Path) -> AsyncClient:
     engine = create_async_engine(
         "sqlite+aiosqlite://",
         poolclass=StaticPool,
@@ -24,6 +27,10 @@ async def client() -> AsyncClient:
             yield session
 
     app.dependency_overrides[get_db] = override_get_db
+    app.dependency_overrides[get_storage] = lambda: LocalObjectStorage(
+        root=tmp_path / "evidence",
+        max_upload_bytes=128,
+    )
 
     async with AsyncClient(
         transport=ASGITransport(app=app),
