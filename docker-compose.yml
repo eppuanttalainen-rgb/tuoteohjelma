@@ -38,6 +38,7 @@ services:
     environment:
       NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL:-http://localhost:8000}
       NEXT_PUBLIC_DEV_ORGANIZATION_ID: ${NEXT_PUBLIC_DEV_ORGANIZATION_ID:-11111111-1111-1111-1111-111111111111}
+      NEXT_PUBLIC_DEV_REVIEWER_ID: ${NEXT_PUBLIC_DEV_REVIEWER_ID:-development-engineer}
     ports:
       - "3000:3000"
     depends_on:
