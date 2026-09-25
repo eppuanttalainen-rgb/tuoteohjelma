@@ -29,7 +29,7 @@ async def client(tmp_path: Path) -> AsyncClient:
     app.dependency_overrides[get_db] = override_get_db
     app.dependency_overrides[get_storage] = lambda: LocalObjectStorage(
         root=tmp_path / "evidence",
-        max_upload_bytes=5 * 1024 * 1024,
+        max_upload_bytes=128,
     )
 
     async with AsyncClient(
