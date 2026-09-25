@@ -441,3 +441,86 @@ select {
     gap: 4px;
   }
 }
+
+
+.fact-list {
+  display: grid;
+  gap: 14px;
+  margin-top: 20px;
+}
+
+.fact-card {
+  border: 1px solid #dde1e6;
+  border-radius: 12px;
+  padding: 18px;
+}
+
+.fact-card-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  align-items: flex-start;
+}
+
+.fact-card-header h3 {
+  font-size: 1.35rem;
+}
+
+.fact-original {
+  margin: 8px 0 0;
+  color: #626b76;
+  font-size: 0.9rem;
+}
+
+.source-excerpt {
+  margin: 16px 0;
+  padding: 12px 14px;
+  border-left: 3px solid #aeb5be;
+  background: #f7f8fa;
+  color: #343a42;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.88rem;
+  line-height: 1.5;
+}
+
+.fact-meta-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px 18px;
+  color: #626b76;
+  font-size: 0.85rem;
+}
+
+.fact-review-controls {
+  display: grid;
+  grid-template-columns: auto minmax(180px, 1fr) auto auto;
+  gap: 10px;
+  align-items: end;
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid #e2e5e9;
+}
+
+.correction-field {
+  display: grid;
+  gap: 6px;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+@media (max-width: 760px) {
+  .fact-card-header,
+  .fact-review-controls {
+    align-items: stretch;
+    grid-template-columns: 1fr;
+  }
+
+  .fact-card-header {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .fact-meta-grid {
+    grid-template-columns: 1fr;
+  }
+}
