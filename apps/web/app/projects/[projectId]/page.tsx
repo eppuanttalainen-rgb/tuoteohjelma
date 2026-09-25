@@ -285,6 +285,7 @@ export default function ProjectWorkspacePage() {
         </p>
         <div className="actions">
           <Link href="/projects">← Projects</Link>
+          <Link href={`/projects/${projectId}/facts`}>Fact review →</Link>
           <span className="status">{project?.jurisdiction || "No jurisdiction"}</span>
           <span className="status">{documents.length} evidence file(s)</span>
         </div>
