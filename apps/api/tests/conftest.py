@@ -7,7 +7,14 @@ from sqlalchemy.pool import StaticPool
 
 from app.db import Base, get_db
 from app.main import app
-from app.models import Document, DocumentPage, Machine, Project  # noqa: F401
+from app.models import (  # noqa: F401
+    Document,
+    DocumentPage,
+    FactCandidate,
+    FactReview,
+    Machine,
+    Project,
+)
 from app.storage import LocalObjectStorage, get_storage
 
 
