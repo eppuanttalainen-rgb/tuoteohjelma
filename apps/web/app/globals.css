@@ -12,6 +12,10 @@ body {
   margin: 0;
 }
 
+a {
+  color: inherit;
+}
+
 main {
   width: min(960px, calc(100% - 40px));
   margin: 0 auto;
@@ -46,6 +50,10 @@ h2 {
   margin-top: 0;
 }
 
+h3 {
+  margin: 0 0 8px;
+}
+
 .lead {
   max-width: 720px;
   font-size: 1.2rem;
@@ -53,13 +61,39 @@ h2 {
   color: #434a54;
 }
 
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin-top: 20px;
+}
+
 .status {
   display: inline-block;
-  margin-top: 12px;
   padding: 8px 12px;
   border: 1px solid #cbd1d8;
   border-radius: 999px;
   font-size: 0.9rem;
+}
+
+.button {
+  appearance: none;
+  display: inline-block;
+  border: 1px solid #17191c;
+  border-radius: 10px;
+  background: #17191c;
+  color: white;
+  padding: 10px 16px;
+  font: inherit;
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.button:disabled {
+  cursor: wait;
+  opacity: 0.65;
 }
 
 .workflow {
@@ -75,4 +109,101 @@ h2 {
 .principle p {
   margin-bottom: 0;
   line-height: 1.6;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.field {
+  display: grid;
+  gap: 7px;
+  font-size: 0.92rem;
+  font-weight: 700;
+}
+
+.field-wide {
+  grid-column: 1 / -1;
+}
+
+input,
+textarea {
+  width: 100%;
+  border: 1px solid #cbd1d8;
+  border-radius: 10px;
+  background: white;
+  padding: 11px 12px;
+  color: inherit;
+  font: inherit;
+  font-weight: 400;
+}
+
+textarea {
+  resize: vertical;
+}
+
+.error {
+  margin-top: 16px;
+  padding: 12px;
+  border: 1px solid #b7bcc4;
+  border-radius: 10px;
+}
+
+.project-list {
+  display: grid;
+  gap: 12px;
+}
+
+.project-card {
+  display: flex;
+  justify-content: space-between;
+  gap: 24px;
+  border: 1px solid #dde1e6;
+  border-radius: 12px;
+  padding: 18px;
+}
+
+.project-card p {
+  margin: 0;
+  color: #535c67;
+}
+
+.project-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+  min-width: 120px;
+  color: #626b76;
+  font-size: 0.9rem;
+}
+
+@media (max-width: 640px) {
+  main {
+    width: min(100% - 24px, 960px);
+    padding: 24px 0;
+  }
+
+  .hero,
+  section {
+    padding: 22px;
+  }
+
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .field-wide {
+    grid-column: auto;
+  }
+
+  .project-card {
+    flex-direction: column;
+  }
+
+  .project-meta {
+    align-items: flex-start;
+  }
 }
