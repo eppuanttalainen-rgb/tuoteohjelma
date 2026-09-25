@@ -113,3 +113,17 @@ async def test_document_inventory_is_tenant_scoped(client: AsyncClient) -> None:
         headers={"X-Organization-Id": organization_b},
     )
     assert hidden_document.status_code == 404
+
+
+async def test_upload_rejects_file_over_configured_limit(client: AsyncClient) -> None:
+    organization_id = str(uuid.uuid4())
+    project = await _create_project(client, organization_id)
+
+    oversized_pdf = b"%PDF-" + (b"x" * 200)
+    response = await client.post(
+        f"/api/v1/projects/{project['id']}/documents",
+        headers={"X-Organization-Id": organization_id},
+        files={"file": ("oversized.pdf", oversized_pdf, "application/pdf")},
+    )
+
+    assert response.status_code == 413
