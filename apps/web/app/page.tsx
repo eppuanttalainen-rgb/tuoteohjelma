@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 const workflow = [
   "Upload legacy evidence",
   "Reconstruct machine facts",
@@ -9,13 +11,18 @@ export default function Home() {
   return (
     <main>
       <section className="hero">
-        <p className="eyebrow">Slice 0 · Foundation</p>
+        <p className="eyebrow">Slice 1 · Projects and machines</p>
         <h1>Machine Compliance Intelligence</h1>
         <p className="lead">
           Turn fragmented legacy machine documentation into a traceable current-state record
           before retrofit design begins.
         </p>
-        <div className="status">Prototype foundation active</div>
+        <div className="actions">
+          <Link className="button" href="/projects">
+            Open projects
+          </Link>
+          <span className="status">Prototype foundation active</span>
+        </div>
       </section>
 
       <section>
