@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db import get_db
 from app.dependencies import OrganizationId
-from app.models import Document, DocumentPage, Machine, Project
+from app.models import Document, DocumentPage, FactCandidate, Machine, Project
 from app.parsing import PdfParseError, PypdfParser, get_pdf_parser
 from app.schemas import DocumentPageRead, DocumentParseResult, DocumentRead
 from app.storage import (
@@ -202,6 +202,21 @@ async def parse_document(
             detail="Document is already being parsed",
         )
 
+    existing_candidate = await db.scalar(
+        select(FactCandidate.id).where(
+            FactCandidate.document_id == document.id,
+            FactCandidate.organization_id == organization_id,
+        )
+    )
+    if existing_candidate is not None:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=(
+                "Document provenance is locked after fact extraction; "
+                "reparse requires a versioned source workflow"
+            ),
+        )
+
     document.processing_status = "PARSING"
     await db.commit()
 
@@ -217,19 +232,41 @@ async def parse_document(
         ) from exc
 
     try:
-        await db.execute(
-            delete(DocumentPage).where(DocumentPage.document_id == document.id)
+        existing_result = await db.scalars(
+            select(DocumentPage).where(DocumentPage.document_id == document.id)
         )
+        existing_pages = {
+            page.page_number: page for page in existing_result
+        }
+        parsed_page_numbers: set[int] = set()
+
         for page in parsed_pages:
-            db.add(
-                DocumentPage(
-                    organization_id=organization_id,
-                    document_id=document.id,
-                    page_number=page.page_number,
-                    text=page.text,
-                    text_sha256=page.text_sha256,
-                    parser_name=parser.name,
-                    parser_version=parser.version,
+            parsed_page_numbers.add(page.page_number)
+            existing = existing_pages.get(page.page_number)
+            if existing is None:
+                db.add(
+                    DocumentPage(
+                        organization_id=organization_id,
+                        document_id=document.id,
+                        page_number=page.page_number,
+                        text=page.text,
+                        text_sha256=page.text_sha256,
+                        parser_name=parser.name,
+                        parser_version=parser.version,
+                    )
+                )
+            else:
+                existing.text = page.text
+                existing.text_sha256 = page.text_sha256
+                existing.parser_name = parser.name
+                existing.parser_version = parser.version
+
+        stale_page_numbers = set(existing_pages) - parsed_page_numbers
+        if stale_page_numbers:
+            await db.execute(
+                delete(DocumentPage).where(
+                    DocumentPage.document_id == document.id,
+                    DocumentPage.page_number.in_(stale_page_numbers),
                 )
             )
 

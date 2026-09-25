@@ -83,6 +83,7 @@ async def test_parse_document_persists_page_level_provenance(
         assert page["parser_version"] == "6.19.0"
 
     original_hashes = [page["text_sha256"] for page in pages]
+    original_ids = [page["id"] for page in pages]
 
     reparse = await client.post(
         f"/api/v1/documents/{document['id']}/parse",
@@ -98,6 +99,7 @@ async def test_parse_document_persists_page_level_provenance(
     ).json()
 
     assert len(reparsed_pages) == 2
+    assert [page["id"] for page in reparsed_pages] == original_ids
     assert [page["text_sha256"] for page in reparsed_pages] == original_hashes
 
 
