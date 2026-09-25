@@ -1,5 +1,5 @@
-import uuid
 from typing import Annotated
+import uuid
 
 from fastapi import Header
 
