@@ -1,4 +1,5 @@
 from functools import lru_cache
+from pathlib import Path
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -11,6 +12,8 @@ class Settings(BaseSettings):
         "machine_intelligence_dev@db:5432/machine_intelligence"
     )
     web_origin: str = "http://localhost:3000"
+    storage_root: Path = Path("./data/evidence")
+    max_upload_mb: int = 50
 
     model_config = SettingsConfigDict(
         env_file=".env",
