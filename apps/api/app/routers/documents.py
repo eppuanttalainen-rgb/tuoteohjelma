@@ -44,8 +44,8 @@ async def upload_document(
     organization_id: OrganizationId,
     db: DbSession,
     storage: Storage,
-    file: UploadFile = File(...),
-    machine_id: uuid.UUID | None = Form(default=None),
+    file: Annotated[UploadFile, File()],
+    machine_id: Annotated[uuid.UUID | None, Form()] = None,
 ) -> Document:
     await _get_project(project_id, organization_id, db)
 
