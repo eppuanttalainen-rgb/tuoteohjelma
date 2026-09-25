@@ -38,6 +38,25 @@ type EvidenceDocument = {
   created_at: string;
 };
 
+type ParsedPage = {
+  id: string;
+  document_id: string;
+  page_number: number;
+  text: string;
+  text_sha256: string;
+  parser_name: string;
+  parser_version: string;
+  created_at: string;
+};
+
+type ParseResult = {
+  document_id: string;
+  processing_status: string;
+  page_count: number;
+  parser_name: string;
+  parser_version: string;
+};
+
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000";
 const ORGANIZATION_ID =
   process.env.NEXT_PUBLIC_DEV_ORGANIZATION_ID ??
@@ -68,6 +87,9 @@ export default function ProjectWorkspacePage() {
   const [documents, setDocuments] = useState<EvidenceDocument[]>([]);
   const [selectedMachineId, setSelectedMachineId] = useState("");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [parsedPages, setParsedPages] = useState<Record<string, ParsedPage[]>>({});
+  const [expandedDocumentId, setExpandedDocumentId] = useState<string | null>(null);
+  const [parsingDocumentId, setParsingDocumentId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -111,6 +133,20 @@ export default function ProjectWorkspacePage() {
   useEffect(() => {
     void loadWorkspace();
   }, [loadWorkspace]);
+
+  async function loadPages(documentId: string) {
+    const response = await fetch(`${API_BASE}/api/v1/documents/${documentId}/pages`, {
+      headers,
+    });
+
+    if (!response.ok) {
+      throw new Error(`Parsed pages request failed: ${response.status}`);
+    }
+
+    const pages = (await response.json()) as ParsedPage[];
+    setParsedPages((current) => ({ ...current, [documentId]: pages }));
+    setExpandedDocumentId(documentId);
+  }
 
   async function uploadEvidence(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -161,7 +197,7 @@ export default function ProjectWorkspacePage() {
       setSelectedFile(null);
       const input = document.getElementById("evidence-file") as HTMLInputElement | null;
       if (input) input.value = "";
-      setNotice("Evidence stored. Automated extraction is intentionally not active yet.");
+      setNotice("Evidence stored. Parse it next to create page-level provenance.");
       await loadWorkspace();
     } catch (requestError) {
       setError(
@@ -169,6 +205,61 @@ export default function ProjectWorkspacePage() {
       );
     } finally {
       setUploading(false);
+    }
+  }
+
+  async function parseEvidence(documentId: string) {
+    setParsingDocumentId(documentId);
+    setError(null);
+    setNotice(null);
+
+    try {
+      const response = await fetch(`${API_BASE}/api/v1/documents/${documentId}/parse`, {
+        method: "POST",
+        headers,
+      });
+
+      if (!response.ok) {
+        const payload = (await response.json().catch(() => null)) as
+          | { detail?: string }
+          | null;
+        throw new Error(payload?.detail || `Parse failed: ${response.status}`);
+      }
+
+      const result = (await response.json()) as ParseResult;
+      setNotice(
+        `${result.page_count} page(s) parsed with ${result.parser_name} ${result.parser_version}.`,
+      );
+      await loadWorkspace();
+      await loadPages(documentId);
+    } catch (requestError) {
+      await loadWorkspace();
+      setError(
+        requestError instanceof Error ? requestError.message : "Could not parse evidence",
+      );
+    } finally {
+      setParsingDocumentId(null);
+    }
+  }
+
+  async function togglePages(documentId: string) {
+    if (expandedDocumentId === documentId) {
+      setExpandedDocumentId(null);
+      return;
+    }
+
+    if (parsedPages[documentId]) {
+      setExpandedDocumentId(documentId);
+      return;
+    }
+
+    try {
+      setError(null);
+      await loadPages(documentId);
+    } catch (requestError) {
+      setError(
+        requestError instanceof Error ? requestError.message : "Could not load parsed pages",
+      );
     }
   }
 
@@ -186,11 +277,11 @@ export default function ProjectWorkspacePage() {
   return (
     <main>
       <section>
-        <p className="eyebrow">Slice 2 · Evidence workspace</p>
+        <p className="eyebrow">Slice 3 · Evidence provenance</p>
         <h1>{project?.title ?? "Project"}</h1>
         <p className="lead">
           {project?.objective ||
-            "Collect the evidence needed to reconstruct the machine's current state."}
+            "Collect and trace the evidence needed to reconstruct the machine's current state."}
         </p>
         <div className="actions">
           <Link href="/projects">← Projects</Link>
@@ -202,8 +293,8 @@ export default function ProjectWorkspacePage() {
       <section>
         <h2>Add evidence</h2>
         <p className="section-copy">
-          Slice 2 stores and inventories PDF evidence only. It does not yet extract technical
-          facts or make compliance conclusions.
+          PDFs can now be stored and deterministically parsed into page-level text with provenance.
+          Technical fact extraction and compliance conclusions remain intentionally disabled.
         </p>
 
         <form className="evidence-form" onSubmit={uploadEvidence}>
@@ -245,7 +336,7 @@ export default function ProjectWorkspacePage() {
         <div className="section-heading-row">
           <div>
             <p className="eyebrow">Project evidence</p>
-            <h2>Inventory</h2>
+            <h2>Inventory & provenance</h2>
           </div>
           <button className="secondary-button" onClick={() => void loadWorkspace()} type="button">
             Refresh
@@ -261,6 +352,9 @@ export default function ProjectWorkspacePage() {
           <div className="evidence-list">
             {documents.map((item) => {
               const machine = machines.find((candidate) => candidate.id === item.machine_id);
+              const pages = parsedPages[item.id] ?? [];
+              const isExpanded = expandedDocumentId === item.id;
+              const isParsing = parsingDocumentId === item.id;
 
               return (
                 <article className="evidence-card" key={item.id}>
@@ -273,8 +367,9 @@ export default function ProjectWorkspacePage() {
                       {machine ? machineLabel(machine) : "Project-level evidence"} ·{" "}
                       {formatBytes(item.size_bytes)}
                     </p>
-                    <code className="hash">SHA-256 {item.sha256}</code>
+                    <code className="hash">File SHA-256 {item.sha256}</code>
                   </div>
+
                   <div className="evidence-meta">
                     <span>
                       {new Date(item.created_at).toLocaleString(undefined, {
@@ -283,7 +378,52 @@ export default function ProjectWorkspacePage() {
                       })}
                     </span>
                     <span>{item.id.slice(0, 8)}…</span>
+                    <div className="evidence-actions">
+                      <button
+                        className="secondary-button"
+                        disabled={isParsing || item.processing_status === "PARSING"}
+                        onClick={() => void parseEvidence(item.id)}
+                        type="button"
+                      >
+                        {isParsing || item.processing_status === "PARSING"
+                          ? "Parsing…"
+                          : item.processing_status === "PARSED"
+                            ? "Reparse"
+                            : "Parse"}
+                      </button>
+
+                      {item.processing_status === "PARSED" ? (
+                        <button
+                          className="secondary-button"
+                          onClick={() => void togglePages(item.id)}
+                          type="button"
+                        >
+                          {isExpanded ? "Hide pages" : "Show pages"}
+                        </button>
+                      ) : null}
+                    </div>
                   </div>
+
+                  {isExpanded ? (
+                    <div className="parsed-pages">
+                      <div className="provenance-heading">
+                        <strong>Page-level provenance</strong>
+                        <span>{pages.length} page(s)</span>
+                      </div>
+                      {pages.map((page) => (
+                        <article className="parsed-page" key={page.id}>
+                          <div className="parsed-page-heading">
+                            <strong>Page {page.page_number}</strong>
+                            <span>
+                              {page.parser_name} {page.parser_version}
+                            </span>
+                          </div>
+                          <pre>{page.text || "[No extractable text on this page]"}</pre>
+                          <code className="hash">Text SHA-256 {page.text_sha256}</code>
+                        </article>
+                      ))}
+                    </div>
+                  ) : null}
                 </article>
               );
             })}
