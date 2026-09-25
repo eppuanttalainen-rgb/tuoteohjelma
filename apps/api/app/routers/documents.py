@@ -217,19 +217,41 @@ async def parse_document(
         ) from exc
 
     try:
-        await db.execute(
-            delete(DocumentPage).where(DocumentPage.document_id == document.id)
+        existing_result = await db.scalars(
+            select(DocumentPage).where(DocumentPage.document_id == document.id)
         )
+        existing_pages = {
+            page.page_number: page for page in existing_result
+        }
+        parsed_page_numbers: set[int] = set()
+
         for page in parsed_pages:
-            db.add(
-                DocumentPage(
-                    organization_id=organization_id,
-                    document_id=document.id,
-                    page_number=page.page_number,
-                    text=page.text,
-                    text_sha256=page.text_sha256,
-                    parser_name=parser.name,
-                    parser_version=parser.version,
+            parsed_page_numbers.add(page.page_number)
+            existing = existing_pages.get(page.page_number)
+            if existing is None:
+                db.add(
+                    DocumentPage(
+                        organization_id=organization_id,
+                        document_id=document.id,
+                        page_number=page.page_number,
+                        text=page.text,
+                        text_sha256=page.text_sha256,
+                        parser_name=parser.name,
+                        parser_version=parser.version,
+                    )
+                )
+            else:
+                existing.text = page.text
+                existing.text_sha256 = page.text_sha256
+                existing.parser_name = parser.name
+                existing.parser_version = parser.version
+
+        stale_page_numbers = set(existing_pages) - parsed_page_numbers
+        if stale_page_numbers:
+            await db.execute(
+                delete(DocumentPage).where(
+                    DocumentPage.document_id == document.id,
+                    DocumentPage.page_number.in_(stale_page_numbers),
                 )
             )
 
