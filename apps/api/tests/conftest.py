@@ -14,6 +14,7 @@ from app.models import (  # noqa: F401
     FactReview,
     Machine,
     Project,
+    Snapshot,
     StateAssertion,
     StateAssertionEvidence,
     VerificationResult,
