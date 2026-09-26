@@ -15,6 +15,11 @@ from app.schemas.reconciliation import (
     StateAssertionRead,
     VerificationTaskRead,
 )
+from app.schemas.verification import (
+    VerificationResultCreate,
+    VerificationResultRead,
+    VerificationSubmissionResult,
+)
 
 __all__ = [
     "AssertionEvidenceRead",
@@ -32,5 +37,8 @@ __all__ = [
     "ReconciliationResult",
     "StateAssertionDetail",
     "StateAssertionRead",
+    "VerificationResultCreate",
+    "VerificationResultRead",
+    "VerificationSubmissionResult",
     "VerificationTaskRead",
 ]
