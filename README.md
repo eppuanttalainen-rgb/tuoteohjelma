@@ -127,7 +127,7 @@ The API container automatically runs `alembic upgrade head` before starting.
 - fact-review workspace in the web UI
 - CV-204 regression coverage for 11 kW original, 15 kW replacement, unrelated 7.5 kW evidence, and ambiguous guard-switch data
 
-### Slice 5 — reviewed-fact reconciliation (current)
+### Slice 5 — reviewed-fact reconciliation
 
 - only CONFIRMED/CORRECTED fact candidates participate
 - deterministic reviewed-fact reconciliation v1
@@ -142,7 +142,23 @@ The API container automatically runs `alembic upgrade head` before starting.
 - idempotent reconciliation
 - state/history/verification workspace in the web UI
 
-External LLM extraction, OCR, compliance interpretation, and autonomous legal/safety judgment are intentionally **not active yet**.
+### Slice 6 — field verification (current)
+
+- tenant-aware VerificationResult model
+- FactCandidate provenance supports DOCUMENT_PAGE or FIELD_VERIFICATION
+- database constraint requires exactly one evidence source type
+- mobile field-verification task page
+- observed value + optional unit and engineer note
+- field observation creates a CONFIRMED FactCandidate and FactReview audit entry
+- extraction method/version: field_verification / v1
+- field observation automatically reruns reconciliation
+- reviewed field evidence can resolve UNKNOWN/DISPUTED machine state
+- older document evidence remains SUPERSEDED history
+- one verification result per task prevents silent duplicate observations
+- MISSING_REFERENCED_DOCUMENT tasks cannot be closed by a field observation
+- secure real photo upload remains deliberately disabled until Security Gate #4
+
+External LLM extraction, OCR, compliance interpretation, autonomous legal/safety judgment, and real customer photo handling are intentionally **not active yet**.
 
 ## Golden synthetic pack
 
@@ -192,7 +208,9 @@ Image-only pages may produce no text. OCR is deliberately deferred to a later fa
 
 After fact extraction, the source document is locked against in-place reparsing. This prevents reviewed candidates from silently pointing at changed source text. A future parser-upgrade workflow should create a versioned source lineage rather than mutating reviewed provenance.
 
-Every fact candidate stores its source document/page, exact source excerpt, extraction method/version, confidence, normalized value and review state. Human corrections are stored separately from the original extraction, and review actions are audit-recorded with a reviewer reference.
+Every fact candidate stores a typed provenance source. DOCUMENT_PAGE candidates retain document/page evidence. FIELD_VERIFICATION candidates retain a VerificationResult reference. The database enforces that exactly one of these source paths is present.
+
+Each candidate also stores source excerpt, extraction method/version, confidence, normalized value and review state. Human corrections are stored separately from the original extraction, and review actions are audit-recorded with a reviewer reference.
 
 Reconciliation consumes reviewed facts only. A derived state keeps explicit evidence relationships such as SUPPORTS, SUPERSEDED, or CONFLICTS. Ambiguity is surfaced as UNKNOWN/DISPUTED plus a verification task instead of being hidden behind a guessed current value.
 
@@ -227,6 +245,9 @@ Pull requests are validated with:
 - fact extraction/review regression tests
 - reconciliation chronology/conflict regression tests
 - verification-task regression tests
+- field-verification regression tests
+- document-vs-field provenance constraint coverage
+- field resolution of ambiguous guard-switch and PLC state
 - provenance-lock regression tests
 - tenant-isolation tests
 - Ruff lint for app, tests, migrations and scripts
