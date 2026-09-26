@@ -1,7 +1,7 @@
 import json
 import uuid
 from collections import defaultdict
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 from sqlalchemy import delete, select
@@ -38,9 +38,7 @@ def _is_ambiguous(candidate: FactCandidate) -> bool:
     value = _effective_value(candidate)
     if candidate.confidence is not None and candidate.confidence < 0.5:
         return True
-    if isinstance(value, str) and "?" in value:
-        return True
-    return False
+    return bool(isinstance(value, str) and "?" in value)
 
 
 def _derive_group(
@@ -395,7 +393,7 @@ async def reconcile_project(
             continue
         if task.status == "OPEN":
             task.status = "RESOLVED"
-            task.resolved_at = datetime.now(timezone.utc)
+            task.resolved_at = datetime.now(UTC)
             task.resolution_value = assertion_value_map.get(
                 (task.machine_id, task.fact_key)
             )
