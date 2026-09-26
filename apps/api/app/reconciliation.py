@@ -1,7 +1,7 @@
 import json
 import uuid
 from collections import defaultdict
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 from typing import Any
 
 from sqlalchemy import delete, select
@@ -45,6 +45,42 @@ def _derive_group(
     candidates: list[FactCandidate],
 ) -> tuple[str, Any | None, str | None, Any | None, dict[uuid.UUID, str], str | None]:
     units = {candidate.unit for candidate in candidates if candidate.unit is not None}
+
+    field_candidates = [
+        candidate
+        for candidate in candidates
+        if candidate.source_kind == "FIELD_VERIFICATION"
+    ]
+    if field_candidates:
+        latest_field = max(
+            field_candidates,
+            key=lambda candidate: (
+                candidate.effective_date or date.min,
+                candidate.created_at.isoformat() if candidate.created_at else "",
+                str(candidate.id),
+            ),
+        )
+        winner_value = _effective_value(latest_field)
+        field_unit = latest_field.unit
+        if field_unit is None and len(units) == 1:
+            field_unit = next(iter(units))
+        relationships = {
+            candidate.id: (
+                "SUPPORTS"
+                if candidate.id == latest_field.id
+                else "SUPERSEDED"
+            )
+            for candidate in candidates
+        }
+        return (
+            "DERIVED",
+            winner_value,
+            field_unit,
+            latest_field.effective_date,
+            relationships,
+            None,
+        )
+
     if len(units) > 1:
         return (
             "DISPUTED",
@@ -250,6 +286,7 @@ async def reconcile_project(
             )
             db.add(assertion)
             await db.flush()
+            existing_assertions[(machine_id, fact_key)] = assertion
 
         assertion.status = status
         assertion.value = value

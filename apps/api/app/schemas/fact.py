@@ -12,8 +12,10 @@ class FactCandidateRead(BaseModel):
     organization_id: uuid.UUID
     project_id: uuid.UUID
     machine_id: uuid.UUID | None
-    document_id: uuid.UUID
-    document_page_id: uuid.UUID
+    source_kind: str
+    document_id: uuid.UUID | None
+    document_page_id: uuid.UUID | None
+    verification_result_id: uuid.UUID | None
     fact_key: str
     raw_value: str
     normalized_value: Any

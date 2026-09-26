@@ -18,8 +18,10 @@ type EvidenceDocument = {
 type FactCandidate = {
   id: string;
   machine_id: string | null;
-  document_id: string;
-  document_page_id: string;
+  source_kind: string;
+  document_id: string | null;
+  document_page_id: string | null;
+  verification_result_id: string | null;
   fact_key: string;
   raw_value: string;
   normalized_value: unknown;
@@ -354,8 +356,10 @@ export default function FactReviewPage() {
                       Date: {candidate.effective_date || "not established"}
                     </span>
                     <span>
-                      Source: {candidate.document_id.slice(0, 8)}… /{" "}
-                      {candidate.document_page_id.slice(0, 8)}…
+                      Source:{" "}
+                      {candidate.source_kind === "FIELD_VERIFICATION"
+                        ? `field verification ${candidate.verification_result_id?.slice(0, 8) ?? "unknown"}…`
+                        : `${candidate.document_id?.slice(0, 8) ?? "document"}… / ${candidate.document_page_id?.slice(0, 8) ?? "page"}…`}
                     </span>
                     <span>
                       Extractor: {candidate.extraction_method}{" "}
