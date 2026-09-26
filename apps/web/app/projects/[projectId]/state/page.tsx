@@ -18,8 +18,10 @@ type FactCandidate = {
   source_excerpt: string;
   effective_date: string | null;
   review_state: string;
-  document_id: string;
-  document_page_id: string;
+  source_kind: string;
+  document_id: string | null;
+  document_page_id: string | null;
+  verification_result_id: string | null;
 };
 
 type AssertionEvidence = {
@@ -324,6 +326,9 @@ export default function StateReconstructionPage() {
                         </span>
                         <span>{candidate.effective_date || "undated"}</span>
                         <span className="history-source">
+                          {candidate.source_kind === "FIELD_VERIFICATION"
+                            ? "FIELD · "
+                            : "DOC · "}
                           {candidate.source_excerpt}
                         </span>
                       </div>
@@ -357,6 +362,16 @@ export default function StateReconstructionPage() {
                 </div>
                 <p>{task.reason}</p>
                 <p className="verification-instructions">{task.instructions}</p>
+                {task.reason_code !== "MISSING_REFERENCED_DOCUMENT" ? (
+                  <Link
+                    className="button"
+                    href={`/projects/${projectId}/verify/${task.id}`}
+                  >
+                    Open field verification
+                  </Link>
+                ) : (
+                  <span className="status">Resolve by supplying document</span>
+                )}
               </article>
             ))}
           </div>
