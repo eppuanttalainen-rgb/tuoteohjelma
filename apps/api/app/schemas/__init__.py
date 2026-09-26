@@ -15,6 +15,7 @@ from app.schemas.reconciliation import (
     StateAssertionRead,
     VerificationTaskRead,
 )
+from app.schemas.snapshot import SnapshotRead, SnapshotSummary
 from app.schemas.verification import (
     VerificationResultCreate,
     VerificationResultRead,
@@ -36,6 +37,8 @@ __all__ = [
     "ProjectRead",
     "ReconciliationResult",
     "StateAssertionDetail",
+    "SnapshotRead",
+    "SnapshotSummary",
     "StateAssertionRead",
     "VerificationResultCreate",
     "VerificationResultRead",
