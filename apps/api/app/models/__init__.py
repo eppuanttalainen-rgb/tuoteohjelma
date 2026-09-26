@@ -6,6 +6,7 @@ from app.models.machine import Machine
 from app.models.project import Project
 from app.models.state_assertion import StateAssertion
 from app.models.state_assertion_evidence import StateAssertionEvidence
+from app.models.verification_result import VerificationResult
 from app.models.verification_task import VerificationTask
 
 __all__ = [
@@ -17,5 +18,6 @@ __all__ = [
     "Project",
     "StateAssertion",
     "StateAssertionEvidence",
+    "VerificationResult",
     "VerificationTask",
 ]
