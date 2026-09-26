@@ -7,6 +7,7 @@ from datetime import date
 from typing import Any
 
 DATE_PATTERN = re.compile(r"^Date:\s*(\d{4}-\d{2}-\d{2})$", re.MULTILINE)
+YEAR_PATTERN = re.compile(r"^(Commissioned|Installed):\s*(\d{4})$", re.MULTILINE)
 MACHINE_PATTERN = re.compile(r"^Machine:\s*(.+)$", re.MULTILINE)
 SERIAL_PATTERN = re.compile(r"^Serial:\s*(.+)$", re.MULTILINE)
 MOTOR_TAG_PATTERN = re.compile(r"^Motor tag:\s*([A-Za-z0-9_-]+)$", re.MULTILINE)
@@ -31,6 +32,10 @@ GUARD_TAG_PATTERN = re.compile(
 )
 GUARD_MODEL_PATTERN = re.compile(
     r"^Model marking partly unreadable:\s*(.+)$",
+    re.MULTILINE,
+)
+RISK_ASSESSMENT_REF_PATTERN = re.compile(
+    r"^Risk assessment reference:\s*(.+)$",
     re.MULTILINE,
 )
 MANUFACTURER_PATTERN = re.compile(
@@ -132,14 +137,27 @@ class DeterministicFactExtractor:
             "safety.guard_switch.model",
             confidence=0.45,
         )
+        self._append_matches(
+            facts,
+            text,
+            RISK_ASSESSMENT_REF_PATTERN,
+            "evidence.reference.risk_assessment",
+            confidence=0.99,
+            effective_date=effective_date,
+        )
         return facts
 
     @staticmethod
     def _effective_date(text: str) -> date | None:
         match = DATE_PATTERN.search(text)
-        if match is None:
-            return None
-        return date.fromisoformat(match.group(1))
+        if match is not None:
+            return date.fromisoformat(match.group(1))
+
+        year_match = YEAR_PATTERN.search(text)
+        if year_match is not None:
+            return date(int(year_match.group(2)), 1, 1)
+
+        return None
 
     @staticmethod
     def _source_line(text: str, match: re.Match[str]) -> str:

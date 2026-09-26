@@ -261,6 +261,7 @@ export default function FactReviewPage() {
         </p>
         <div className="actions">
           <Link href={`/projects/${projectId}`}>← Evidence workspace</Link>
+          <Link href={`/projects/${projectId}/state`}>State reconstruction →</Link>
           <span className="status">{candidates.length} candidate(s)</span>
           <span className="status">{proposedCount} proposed</span>
         </div>

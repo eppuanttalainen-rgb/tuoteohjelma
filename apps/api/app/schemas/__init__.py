@@ -8,8 +8,16 @@ from app.schemas.fact import (
 )
 from app.schemas.machine import MachineCreate, MachineRead
 from app.schemas.project import ProjectCreate, ProjectRead
+from app.schemas.reconciliation import (
+    AssertionEvidenceRead,
+    ReconciliationResult,
+    StateAssertionDetail,
+    StateAssertionRead,
+    VerificationTaskRead,
+)
 
 __all__ = [
+    "AssertionEvidenceRead",
     "DocumentPageRead",
     "DocumentParseResult",
     "DocumentRead",
@@ -21,4 +29,8 @@ __all__ = [
     "MachineRead",
     "ProjectCreate",
     "ProjectRead",
+    "ReconciliationResult",
+    "StateAssertionDetail",
+    "StateAssertionRead",
+    "VerificationTaskRead",
 ]

@@ -14,6 +14,9 @@ from app.models import (  # noqa: F401
     FactReview,
     Machine,
     Project,
+    StateAssertion,
+    StateAssertionEvidence,
+    VerificationTask,
 )
 from app.storage import LocalObjectStorage, get_storage
 
