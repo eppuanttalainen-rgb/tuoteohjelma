@@ -235,6 +235,7 @@ export default function StateReconstructionPage() {
         </p>
         <div className="actions">
           <Link href={`/projects/${projectId}/facts`}>← Fact review</Link>
+          <Link href={`/projects/${projectId}/snapshots`}>Snapshots & reports →</Link>
           <span className="status">{assertions.length} state assertion(s)</span>
           <span className="status">{openTasks.length} open verification task(s)</span>
         </div>

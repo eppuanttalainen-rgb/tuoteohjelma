@@ -8,6 +8,7 @@ from app.routers import (
     machines_router,
     projects_router,
     reconciliation_router,
+    snapshots_router,
     verification_router,
 )
 
@@ -35,6 +36,7 @@ app.include_router(documents_router)
 app.include_router(facts_router)
 app.include_router(reconciliation_router)
 app.include_router(verification_router)
+app.include_router(snapshots_router)
 
 
 @app.get("/api/v1/health", tags=["system"])

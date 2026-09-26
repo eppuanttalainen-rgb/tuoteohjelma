@@ -142,7 +142,7 @@ The API container automatically runs `alembic upgrade head` before starting.
 - idempotent reconciliation
 - state/history/verification workspace in the web UI
 
-### Slice 6 — field verification (current)
+### Slice 6 — field verification
 
 - tenant-aware VerificationResult model
 - FactCandidate provenance supports DOCUMENT_PAGE or FIELD_VERIFICATION
@@ -157,6 +157,21 @@ The API container automatically runs `alembic upgrade head` before starting.
 - one verification result per task prevents silent duplicate observations
 - MISSING_REFERENCED_DOCUMENT tasks cannot be closed by a field observation
 - secure real photo upload remains deliberately disabled until Security Gate #4
+
+### Slice 7 — immutable snapshot and evidence report (current)
+
+- tenant-aware immutable Snapshot model
+- Alembic migration 0007
+- canonical deterministic snapshot payload
+- SHA-256 state hash
+- unchanged machine state reuses the same snapshot
+- reviewed current state, historical evidence, documents, verification tasks and field results are frozen together
+- snapshot status distinguishes REVIEWED_BASELINE from WITH_OPEN_ITEMS
+- report is rendered from Snapshot payload only, never from later live database state
+- printable HTML Machine Current-State Evidence Report
+- state hash and traceability appendix in the report
+- explicit statement that the report is evidence documentation, not a CE/compliance certificate
+- Snapshots & Reports web workspace with report preview and browser Print / Save as PDF
 
 External LLM extraction, OCR, compliance interpretation, autonomous legal/safety judgment, and real customer photo handling are intentionally **not active yet**.
 
@@ -214,6 +229,8 @@ Each candidate also stores source excerpt, extraction method/version, confidence
 
 Reconciliation consumes reviewed facts only. A derived state keeps explicit evidence relationships such as SUPPORTS, SUPERSEDED, or CONFLICTS. Ambiguity is surfaced as UNKNOWN/DISPUTED plus a verification task instead of being hidden behind a guessed current value.
 
+A Snapshot freezes the resulting machine state, provenance, document hashes and verification history into a canonical payload. The payload hash is deterministic and the report reads only the frozen Snapshot, so a historical report cannot silently change when live machine state changes later.
+
 ## Security boundary
 
 This repository is currently public.
@@ -248,6 +265,9 @@ Pull requests are validated with:
 - field-verification regression tests
 - document-vs-field provenance constraint coverage
 - field resolution of ambiguous guard-switch and PLC state
+- immutable snapshot/hash regression tests
+- frozen-report regression tests
+- historical report unchanged after later live-state changes
 - provenance-lock regression tests
 - tenant-isolation tests
 - Ruff lint for app, tests, migrations and scripts
