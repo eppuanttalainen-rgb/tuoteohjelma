@@ -55,6 +55,7 @@ class ReconciliationResult(BaseModel):
     project_id: uuid.UUID
     assertions_derived: int
     assertions_disputed: int
+    assertions_unknown: int
     assertions_unchanged: int
     verification_tasks_opened: int
     verification_tasks_resolved: int
