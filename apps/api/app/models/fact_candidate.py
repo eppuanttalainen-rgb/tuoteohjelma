@@ -3,6 +3,7 @@ from datetime import date, datetime
 
 from sqlalchemy import (
     JSON,
+    CheckConstraint,
     Date,
     DateTime,
     Float,
@@ -26,6 +27,20 @@ class FactCandidate(Base):
             "candidate_fingerprint",
             name="uq_fact_candidates_org_fingerprint",
         ),
+        CheckConstraint(
+            "("
+            "source_kind = 'DOCUMENT_PAGE' "
+            "AND document_id IS NOT NULL "
+            "AND document_page_id IS NOT NULL "
+            "AND verification_result_id IS NULL"
+            ") OR ("
+            "source_kind = 'FIELD_VERIFICATION' "
+            "AND document_id IS NULL "
+            "AND document_page_id IS NULL "
+            "AND verification_result_id IS NOT NULL"
+            ")",
+            name="ck_fact_candidates_exactly_one_source",
+        ),
     )
 
     id: Mapped[uuid.UUID] = mapped_column(
@@ -43,14 +58,23 @@ class FactCandidate(Base):
         nullable=True,
         index=True,
     )
-    document_id: Mapped[uuid.UUID] = mapped_column(
+    source_kind: Mapped[str] = mapped_column(String(40), default="DOCUMENT_PAGE")
+    document_id: Mapped[uuid.UUID | None] = mapped_column(
         Uuid(as_uuid=True),
         ForeignKey("documents.id", ondelete="CASCADE"),
+        nullable=True,
         index=True,
     )
-    document_page_id: Mapped[uuid.UUID] = mapped_column(
+    document_page_id: Mapped[uuid.UUID | None] = mapped_column(
         Uuid(as_uuid=True),
         ForeignKey("document_pages.id", ondelete="CASCADE"),
+        nullable=True,
+        index=True,
+    )
+    verification_result_id: Mapped[uuid.UUID | None] = mapped_column(
+        Uuid(as_uuid=True),
+        ForeignKey("verification_results.id", ondelete="CASCADE"),
+        nullable=True,
         index=True,
     )
     fact_key: Mapped[str] = mapped_column(String(200), index=True)
