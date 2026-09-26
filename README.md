@@ -111,7 +111,7 @@ The API container automatically runs `alembic upgrade head` before starting.
 - deterministic synthetic PDF test factory
 - CV-204 golden regression pack generator
 
-### Slice 4 — fact candidates and human review (current)
+### Slice 4 — fact candidates and human review
 
 - tenant-aware FactCandidate model
 - append-only FactReview audit records
@@ -127,7 +127,22 @@ The API container automatically runs `alembic upgrade head` before starting.
 - fact-review workspace in the web UI
 - CV-204 regression coverage for 11 kW original, 15 kW replacement, unrelated 7.5 kW evidence, and ambiguous guard-switch data
 
-External LLM extraction, OCR, automatic reconciliation/current-state selection, and compliance interpretation are intentionally **not active yet**.
+### Slice 5 — reviewed-fact reconciliation (current)
+
+- only CONFIRMED/CORRECTED fact candidates participate
+- deterministic reviewed-fact reconciliation v1
+- DERIVED state when reviewed evidence agrees or chronology is explicit
+- SUPERSEDED evidence retained as history
+- DISPUTED state when reviewed values conflict without reliable ordering
+- UNKNOWN state for reviewed but incomplete/ambiguous values
+- verification tasks for unresolved conflicts
+- missing referenced-document task for evidence such as RA-2022-17
+- project-level facts cannot automatically override machine-linked state
+- assertion -> candidate -> page -> document traceability
+- idempotent reconciliation
+- state/history/verification workspace in the web UI
+
+External LLM extraction, OCR, compliance interpretation, and autonomous legal/safety judgment are intentionally **not active yet**.
 
 ## Golden synthetic pack
 
@@ -160,7 +175,7 @@ Do not commit evidence files to the repository.
 
 The current storage adapter is intentionally replaceable so an encrypted S3-compatible or customer-specific object store can be introduced before production pilots.
 
-## Parser and fact provenance
+## Parser, fact, and reconstructed-state provenance
 
 PDF text is stored page by page. Each parsed page records:
 
@@ -178,6 +193,8 @@ Image-only pages may produce no text. OCR is deliberately deferred to a later fa
 After fact extraction, the source document is locked against in-place reparsing. This prevents reviewed candidates from silently pointing at changed source text. A future parser-upgrade workflow should create a versioned source lineage rather than mutating reviewed provenance.
 
 Every fact candidate stores its source document/page, exact source excerpt, extraction method/version, confidence, normalized value and review state. Human corrections are stored separately from the original extraction, and review actions are audit-recorded with a reviewer reference.
+
+Reconciliation consumes reviewed facts only. A derived state keeps explicit evidence relationships such as SUPPORTS, SUPERSEDED, or CONFLICTS. Ambiguity is surfaced as UNKNOWN/DISPUTED plus a verification task instead of being hidden behind a guessed current value.
 
 ## Security boundary
 
@@ -208,6 +225,8 @@ Pull requests are validated with:
 - API tests
 - parser/golden-pack regression tests
 - fact extraction/review regression tests
+- reconciliation chronology/conflict regression tests
+- verification-task regression tests
 - provenance-lock regression tests
 - tenant-isolation tests
 - Ruff lint for app, tests, migrations and scripts
