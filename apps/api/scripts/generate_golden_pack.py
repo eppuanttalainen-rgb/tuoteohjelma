@@ -17,6 +17,7 @@ DOCUMENTS: dict[str, list[str]] = {
         (
             "DRIVE SYSTEM\n"
             "Motor tag: M1\n"
+            "Commissioned: 2009\n"
             "Rated power: 11 kW\n"
             "Supply: 400 V 50 Hz\n"
             "Status: original equipment"
