@@ -252,9 +252,11 @@ async def test_cv204_chronology_and_verification_tasks(
 
     risk_pdf = make_text_pdf(
         [
-            "RISK ASSESSMENT\n"
-            "Reference: RA-2022-17\n"
-            "Machine: CV-204"
+            (
+                "RISK ASSESSMENT\n"
+                "Reference: RA-2022-17\n"
+                "Machine: CV-204"
+            )
         ]
     )
     upload_risk = await client.post(
@@ -322,9 +324,11 @@ async def test_ambiguous_chronology_becomes_disputed(
             filename=filename,
             payload=make_text_pdf(
                 [
-                    "CONTROL INVENTORY\n"
-                    "Machine: CV-204\n"
-                    f"PLC platform: {plc}"
+                    (
+                        "CONTROL INVENTORY\n"
+                        "Machine: CV-204\n"
+                        f"PLC platform: {plc}"
+                    )
                 ]
             ),
             machine_id=machine["id"],
