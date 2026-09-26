@@ -4,6 +4,7 @@ from app.models.fact_candidate import FactCandidate
 from app.models.fact_review import FactReview
 from app.models.machine import Machine
 from app.models.project import Project
+from app.models.snapshot import Snapshot
 from app.models.state_assertion import StateAssertion
 from app.models.state_assertion_evidence import StateAssertionEvidence
 from app.models.verification_result import VerificationResult
@@ -16,6 +17,7 @@ __all__ = [
     "FactReview",
     "Machine",
     "Project",
+    "Snapshot",
     "StateAssertion",
     "StateAssertionEvidence",
     "VerificationResult",
