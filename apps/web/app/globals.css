@@ -524,3 +524,86 @@ select {
     grid-template-columns: 1fr;
   }
 }
+
+
+.state-list,
+.verification-list {
+  display: grid;
+  gap: 14px;
+  margin-top: 20px;
+}
+
+.state-card,
+.verification-card {
+  border: 1px solid #dde1e6;
+  border-radius: 12px;
+  padding: 18px;
+}
+
+.state-card-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  align-items: flex-start;
+}
+
+.state-card-header h3 {
+  font-size: 1.35rem;
+}
+
+.state-evidence {
+  display: grid;
+  gap: 10px;
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid #e2e5e9;
+}
+
+.history-row {
+  display: grid;
+  grid-template-columns: 110px minmax(120px, 0.8fr) 120px minmax(200px, 1.7fr);
+  gap: 12px;
+  align-items: start;
+  padding: 10px 0;
+  border-top: 1px solid #eef0f2;
+  font-size: 0.88rem;
+}
+
+.history-row:first-of-type {
+  border-top: 0;
+}
+
+.history-relationship {
+  font-weight: 700;
+}
+
+.history-source {
+  color: #535c67;
+  overflow-wrap: anywhere;
+}
+
+.verification-card p {
+  color: #535c67;
+  line-height: 1.55;
+}
+
+.verification-instructions {
+  padding: 12px 14px;
+  border-radius: 9px;
+  background: #f7f8fa;
+}
+
+.verification-card.resolved {
+  opacity: 0.75;
+}
+
+@media (max-width: 760px) {
+  .state-card-header {
+    flex-direction: column;
+  }
+
+  .history-row {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+}
