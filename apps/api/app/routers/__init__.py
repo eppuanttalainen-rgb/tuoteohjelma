@@ -3,6 +3,7 @@ from app.routers.facts import router as facts_router
 from app.routers.machines import router as machines_router
 from app.routers.projects import router as projects_router
 from app.routers.reconciliation import router as reconciliation_router
+from app.routers.verification import router as verification_router
 
 __all__ = [
     "documents_router",
@@ -10,4 +11,5 @@ __all__ = [
     "machines_router",
     "projects_router",
     "reconciliation_router",
+    "verification_router",
 ]
